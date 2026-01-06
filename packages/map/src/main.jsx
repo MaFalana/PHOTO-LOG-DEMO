@@ -119,7 +119,6 @@ export function HwcMap({
   baseLayer,
   onBaseLayerChange,
   mapTilerKey,
-  mapTilerStyle = "satellite",
 
   // Controls
   showControls = true,
@@ -134,8 +133,8 @@ export function HwcMap({
 }) {
   const [isMobile, setIsMobile] = useState(false);
 
-  // Default base layer: if MapTiler key exists, prefer satellite, else streets
-  const effectiveBaseLayer = baseLayer ?? (mapTilerKey ? "satellite" : "streets");
+  // Default base layer: if MapTiler key exists, prefer streets, else satellite
+  const effectiveBaseLayer = baseLayer ?? (mapTilerKey ? "streets" : "satellite");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -246,10 +245,10 @@ export function HwcMap({
           />
         )}
 
-        {effectiveBaseLayer === "satellite" && mapTilerKey && (
+        {effectiveBaseLayer === "satellite" && (
           <TileLayer
             key="satellite"
-            url={`https://api.maptiler.com/maps/${mapTilerStyle}/{z}/{x}/{y}.jpg?key=${mapTilerKey}`}
+            url={`https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=${mapTilerKey}`}
             attribution="&copy; MapTiler &copy; OpenStreetMap contributors"
           />
         )}

@@ -6,9 +6,9 @@ import uvicorn
 from routes.photos import photo_router
 from routes.export import export_router
 
-print("Environment variables loaded.\n")
+print("Environment variables loaded.\n Running on Photo Log Map API V2")
 
-app = FastAPI(title="Photo Log Map API V2", version="2.0.0", openapi_url="/openapi.json", docs_url="/docs", redoc_url="/redoc", swagger_ui_favicon_url="/assets/favicon.ico") # Initialize the Flask application
+app = FastAPI(title="Photo Log Map API | Crawfordsville Market Streetn", version="2.0.0", openapi_url="/openapi.json", docs_url="/docs", redoc_url="/redoc", swagger_ui_favicon_url="/assets/favicon.ico") # Initialize the Flask application
 app.include_router(photo_router) # Include the routers in the app
 app.include_router(export_router) 
 # and enable CORS
