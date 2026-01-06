@@ -216,11 +216,11 @@
   backdrop-filter: blur(4px);
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
-  color: var(--hwc-medium-gray);
+  color: var(--hwc-dark-gray);
   font-size: 10px;
   transform: translateX(-50%);
   white-space: nowrap;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 /* Responsive cluster sizes */
