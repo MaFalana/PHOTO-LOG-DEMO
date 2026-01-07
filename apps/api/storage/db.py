@@ -327,10 +327,19 @@ class DatabaseManager:
         self.photo.delete_one({'_id': id})
         print(f"Deleted MongoDB record for {id}")
 
-        # delete from Azure
+        # delete from Azure - both main image and thumbnail
         try:
+            # Delete main image
             self.az.delete_blob(id)
             print(f"Deleted Azure blob for {id}")
+            
+            # Delete thumbnail (if it exists)
+            try:
+                self.az.delete_blob(f"{id}_thumb")
+                print(f"Deleted Azure thumbnail for {id}")
+            except Exception as thumb_e:
+                print(f"Thumbnail delete failed for {id} (may not exist): {thumb_e}")
+                
         except Exception as e:
             print(f"Azure delete failed for {id}: {e}")
 

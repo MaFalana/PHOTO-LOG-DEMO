@@ -10,12 +10,9 @@ export function PhotoMapApp({ apiBaseUrl, mapTilerKey }) {
 
   // Handle photo uploads - refresh both panel and map
   const handlePhotosChange = () => {
-    console.log('PhotoMapApp: handlePhotosChange called, incrementing refreshTrigger from', refreshTrigger);
-    setRefreshTrigger(prev => {
-      const newValue = prev + 1;
-      console.log('PhotoMapApp: refreshTrigger updated to', newValue);
-      return newValue;
-    });
+    const newTrigger = Date.now(); // Use timestamp for better debugging
+    console.log('PhotoMapApp: handlePhotosChange called, setting refreshTrigger to', newTrigger);
+    setRefreshTrigger(newTrigger);
   };
 
   // Handle map marker clicks - highlight photo in panel

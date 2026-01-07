@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FiCheck, FiSquare, FiDownload, FiTrash2, FiEdit3 } from 'react-icons/fi';
+import { PhotoLightbox } from './photo-lightbox.jsx';
 
 export function PhotoGrid({ 
   apiBaseUrl, 
@@ -16,6 +17,9 @@ export function PhotoGrid({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   // Fetch photos from API
   const fetchPhotos = async (pageNum = 1, append = false) => {
@@ -51,8 +55,10 @@ export function PhotoGrid({
 
   // Initial load and refresh trigger
   useEffect(() => {
-    console.log('PhotoGrid: refreshTrigger changed to:', refreshTrigger);
-    fetchPhotos(1, false);
+    console.log('PhotoGrid: refreshTrigger changed to:', refreshTrigger, 'apiBaseUrl:', apiBaseUrl);
+    if (apiBaseUrl) {
+      fetchPhotos(1, false);
+    }
   }, [apiBaseUrl, refreshTrigger]);
 
   // Load more photos
@@ -83,7 +89,57 @@ export function PhotoGrid({
   };
 
   const handlePhotoClick = (photo) => {
-    onPhotoClick?.(photo);
+    const photoIndex = photos.findIndex(p => p._id === photo._id);
+    setLightboxPhoto(photo);
+    setCurrentPhotoIndex(photoIndex);
+    setIsLightboxOpen(true);
+  };
+
+  const handleLightboxNavigate = (newIndex) => {
+    if (newIndex >= 0 && newIndex < photos.length) {
+      setCurrentPhotoIndex(newIndex);
+      setLightboxPhoto(photos[newIndex]);
+    }
+  };
+
+  const closeLightbox = () => {
+    setIsLightboxOpen(false);
+    setLightboxPhoto(null);
+    setCurrentPhotoIndex(0);
+  };
+
+  const handleLightboxEdit = (updatedPhoto) => {
+    // Update the photo in the local state
+    setPhotos(prev => prev.map(p => 
+      p._id === updatedPhoto._id ? updatedPhoto : p
+    ));
+    onPhotosChange?.(); // Refresh map
+  };
+
+  const handleLightboxDelete = (deletedPhoto) => {
+    // Remove photo from local state
+    setPhotos(prev => prev.filter(p => p._id !== deletedPhoto._id));
+    // Remove from selection if selected
+    if (selectedPhotoIds.includes(deletedPhoto._id)) {
+      onSelectionChange?.(selectedPhotoIds.filter(id => id !== deletedPhoto._id));
+    }
+    
+    // Handle navigation after delete
+    const newPhotos = photos.filter(p => p._id !== deletedPhoto._id);
+    if (newPhotos.length === 0) {
+      // No more photos, close lightbox
+      closeLightbox();
+    } else if (currentPhotoIndex >= newPhotos.length) {
+      // Current index is out of bounds, go to last photo
+      const newIndex = newPhotos.length - 1;
+      setCurrentPhotoIndex(newIndex);
+      setLightboxPhoto(newPhotos[newIndex]);
+    } else {
+      // Stay at current index, but update photo
+      setLightboxPhoto(newPhotos[currentPhotoIndex]);
+    }
+    
+    onPhotosChange?.(); // Refresh map
   };
 
   // Batch action handlers
@@ -98,23 +154,49 @@ export function PhotoGrid({
 
     try {
       // Delete each selected photo
-      const deletePromises = selectedPhotoIds.map(photoId =>
-        fetch(`${apiBaseUrl}/photos/${photoId}/delete`, {
+      const deletePromises = selectedPhotoIds.map(async (photoId) => {
+        const response = await fetch(`${apiBaseUrl}/photos/${photoId}/delete`, {
           method: 'DELETE'
-        })
-      );
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to delete photo ${photoId}: ${response.statusText}`);
+        }
+        
+        return response.json();
+      });
 
-      await Promise.all(deletePromises);
+      const results = await Promise.all(deletePromises);
+      console.log('Batch delete results:', results);
+      
+      // Remove deleted photos from local state immediately
+      const deletedIds = selectedPhotoIds.filter((_, index) => {
+        // Only remove if the delete was successful
+        try {
+          return results[index] && results[index].Message;
+        } catch {
+          return false;
+        }
+      });
+      
+      setPhotos(prev => prev.filter(photo => !deletedIds.includes(photo._id)));
       
       // Clear selection and refresh
       onSelectionChange?.([]);
-      fetchPhotos(1, false); // Refresh photo list
       onPhotosChange?.(); // Notify parent to refresh map
       
-      alert(`Successfully deleted ${selectedPhotoIds.length} photo(s)`);
+      if (deletedIds.length === selectedPhotoIds.length) {
+        alert(`Successfully deleted ${deletedIds.length} photo(s)`);
+      } else {
+        alert(`Deleted ${deletedIds.length} of ${selectedPhotoIds.length} photo(s). Some deletions may have failed.`);
+        // Refresh to get current state
+        fetchPhotos(1, false);
+      }
     } catch (error) {
       console.error('Error deleting photos:', error);
-      alert('Error deleting photos. Please try again.');
+      alert(`Error deleting photos: ${error.message}`);
+      // Refresh the photo list to get current state
+      fetchPhotos(1, false);
     }
   };
 
@@ -256,6 +338,19 @@ export function PhotoGrid({
           </button>
         </div>
       )}
+
+      {/* Photo Lightbox */}
+      <PhotoLightbox
+        photo={lightboxPhoto}
+        isOpen={isLightboxOpen}
+        onClose={closeLightbox}
+        onDelete={handleLightboxDelete}
+        onEdit={handleLightboxEdit}
+        apiBaseUrl={apiBaseUrl}
+        photos={photos}
+        currentIndex={currentPhotoIndex}
+        onNavigate={handleLightboxNavigate}
+      />
     </div>
   );
 }

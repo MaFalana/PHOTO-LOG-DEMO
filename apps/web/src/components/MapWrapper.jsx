@@ -53,7 +53,7 @@ export function MapWrapper({
 
   // Fetch markers on mount and when refresh trigger changes
   useEffect(() => {
-    console.log('MapWrapper: refreshTrigger changed to:', refreshTrigger);
+    console.log('MapWrapper: refreshTrigger changed to:', refreshTrigger, 'apiBaseUrl:', apiBaseUrl);
     if (apiBaseUrl) {
       fetchPhotoMarkers();
     }
