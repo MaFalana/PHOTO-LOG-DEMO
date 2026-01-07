@@ -63,6 +63,13 @@ jobs:
       - name: Sync Assets
         run: npm run assets:sync
 
+      - name: Build Astro Site
+        env:
+          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+          PUBLIC_MAPTILER_API_KEY: ${{ vars.PUBLIC_MAPTILER_API_KEY }}
+          PUBLIC_CESIUM_ION_TOKEN: ${{ vars.PUBLIC_CESIUM_ION_TOKEN }}
+        run: npm --workspace=@hwc/web run build
+
       - name: Log in to Azure
         uses: azure/login@v1
         with:
@@ -89,7 +96,8 @@ jobs:
               --branch ${{ github.ref_name }} \
               --app-location "apps/web" \
               --output-location "dist" \
-              --login-with-github
+              --login-with-github \
+              --sku Free
             
             echo "Waiting for Static Web App to be ready..."
             sleep 30
@@ -105,7 +113,6 @@ jobs:
         env:
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
           PUBLIC_MAPTILER_API_KEY: ${{ vars.PUBLIC_MAPTILER_API_KEY }}
-          PUBLIC_CESIUM_ION_TOKEN: ${{ vars.PUBLIC_CESIUM_ION_TOKEN }}
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -115,6 +122,7 @@ jobs:
           app_location: "apps/web" # App source code path
           api_location: "" # Api source code path - optional
           output_location: "dist" # Built app content directory - optional
+          skip_app_build: true # We handle the build ourselves
           github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
 
