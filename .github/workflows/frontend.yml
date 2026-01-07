@@ -8,6 +8,7 @@ on:
       - "packages/**"
       - "package.json"
       - "package-lock.json"
+      - ".github/workflows/frontend.yml"
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: ["main"]
@@ -16,6 +17,7 @@ on:
       - "packages/**"
       - "package.json"
       - "package-lock.json"
+      - ".github/workflows/frontend.yml"
   workflow_dispatch:
 
 env:

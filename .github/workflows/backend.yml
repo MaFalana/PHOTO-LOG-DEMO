@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "apps/api/**"
+      - ".github/workflows/backend.yml"
   workflow_dispatch:
 
 env:
