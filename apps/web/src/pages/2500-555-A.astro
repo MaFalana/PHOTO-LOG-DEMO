@@ -1,11 +1,11 @@
 ---
 import "../styles/global.css";
-import { HwcMap } from "@hwc/map";
-import {HwcHeader } from "@hwc/header";
-import { MdExitToApp } from "react-icons/md";
-import { envField } from "astro/config";
+import { HwcHeader } from "@hwc/header";
+import { PhotoPanelWrapper } from "../components/PhotoPanelWrapper.jsx";
+import { MapWrapper } from "../components/MapWrapper.jsx";
 
 const key = import.meta.env.PUBLIC_MAPTILER_API_KEY;
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "";
 
 const items = [
   { id: "a", lat: 38.0, lon: -87.5, name: "A" },
@@ -21,9 +21,15 @@ const items = [
 		<title>Photo Log | Crawfordsville Market Street</title>
 	</head>
 	<body>
-        <HwcHeader client:only="react" title="Crawfordsville Market Street RR Grade Seperation"/>
+        <HwcHeader client:only="react" title="Crawfordsville Market Street RR Grade Seperation" right={null} children={null} />
+        
+        <PhotoPanelWrapper 
+            client:only="react" 
+            apiBaseUrl={apiBaseUrl}
+        />
+        
         <div style="height: 93vh;">
-            <HwcMap client:only="react" items={items} mapTilerKey={key} />
+            <MapWrapper client:only="react" items={items} mapTilerKey={key} />
         </div>
 	</body>
 </html>
