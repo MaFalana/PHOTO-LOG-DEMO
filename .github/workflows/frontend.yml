@@ -57,6 +57,36 @@ jobs:
           PUBLIC_MAPTILER_API_KEY: ${{ vars.PUBLIC_MAPTILER_API_KEY }}
         run: npm --workspace=@hwc/web run build
 
+      - name: Check build output
+        run: |
+          echo "Build output contents:"
+          ls -la apps/web/dist/
+          echo "Looking for HTML files:"
+          find apps/web/dist/ -name "*.html" -type f
+
+      - name: Create redirect index.html
+        run: |
+          echo "Creating redirect index.html to /2500-555-A"
+          cat > apps/web/dist/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Redirecting...</title>
+            <meta http-equiv="refresh" content="0; url=/2500-555-A">
+            <script>
+              window.location.href = '/2500-555-A';
+            </script>
+          </head>
+          <body>
+            <p>Redirecting to <a href="/2500-555-A">Photo Log</a>...</p>
+          </body>
+          </html>
+          EOF
+          
+          echo "Verifying index.html was created:"
+          ls -la apps/web/dist/index.html
+
       - name: Log in to Azure
         uses: azure/login@v1
         with:
