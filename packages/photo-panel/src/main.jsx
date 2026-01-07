@@ -1,18 +1,24 @@
 import './photo-panel.css';
 import { useState } from 'react';
 import { HwcPanel, PanelSection } from '@hwc/panel';
-import { FiUpload, FiFilter, FiImage, FiEdit } from 'react-icons/fi';
+import { FiUpload, FiFilter, FiImage } from 'react-icons/fi';
 import { UploadSection } from './upload-section.jsx';
+import { PhotoGrid } from './photo-grid.jsx';
 
 export function PhotoPanel({ 
   isOpen, 
   onToggle, 
   apiBaseUrl,
   title = "Photo Manager",
-  onPhotosChange
+  onPhotosChange,
+  selectedPhotoIds = [],
+  onSelectionChange,
+  highlightedPhotoId,
+  onPhotoClick,
+  refreshTrigger = 0
 }) {
   const [expandedSections, setExpandedSections] = useState({
-    upload: true,
+    upload: false,
     filters: false,
     photos: true
   });
@@ -26,7 +32,7 @@ export function PhotoPanel({
 
   const handleUploadComplete = (count) => {
     console.log(`${count} photos uploaded successfully`);
-    // Refresh photos list
+    // Notify parent to refresh both photo grid and map
     if (onPhotosChange) {
       onPhotosChange();
     }
@@ -71,9 +77,15 @@ export function PhotoPanel({
         isExpanded={expandedSections.photos}
         onToggle={() => toggleSection('photos')}
       >
-        <div className="photos-placeholder">
-          <p className="empty-message">Photo grid with batch actions coming soon...</p>
-        </div>
+        <PhotoGrid
+          apiBaseUrl={apiBaseUrl}
+          selectedPhotoIds={selectedPhotoIds}
+          onSelectionChange={onSelectionChange}
+          highlightedPhotoId={highlightedPhotoId}
+          onPhotoClick={onPhotoClick}
+          refreshTrigger={refreshTrigger}
+          onPhotosChange={onPhotosChange}
+        />
       </PanelSection>
     </HwcPanel>
   );

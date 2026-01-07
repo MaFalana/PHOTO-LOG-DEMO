@@ -192,7 +192,11 @@ class Photo:
                 im2 = ImageOps.exif_transpose(im)     # ✅ respect EXIF orientation
                 w, h = im2.size
                 self.size = {"width": w, "height": h}
-                self.location = _exif_gps(im)
+                
+                # Use more robust GPS extraction from helpers_bytes
+                from models.helpers_bytes import extract_gps_bytes
+                self.location = extract_gps_bytes(data)
+                
                 ts = _exif_timestamp(im)
                 if ts:
                     self.timestamp = ts

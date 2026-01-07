@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 from azure.storage.blob import (
     BlobServiceClient,
     ContentSettings,
@@ -7,9 +8,16 @@ from azure.storage.blob import (
     BlobSasPermissions,
 )
 
+# Load environment variables
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+
 class AzureStorageManager:
     def __init__(self, container_name: str):
         connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        print(f"Azure connection string loaded: {connection_string is not None}")
+        if connection_string is None:
+            raise ValueError("AZURE_STORAGE_CONNECTION_STRING environment variable not found")
+        
         self.blob_service_client = BlobServiceClient.from_connection_string(connection_string)
         self.container_client = self.blob_service_client.get_container_client(container_name)
 

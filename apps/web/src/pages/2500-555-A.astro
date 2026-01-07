@@ -1,16 +1,10 @@
 ---
 import "../styles/global.css";
 import { HwcHeader } from "@hwc/header";
-import { PhotoPanelWrapper } from "../components/PhotoPanelWrapper.jsx";
-import { MapWrapper } from "../components/MapWrapper.jsx";
+import { PhotoMapApp } from "../components/PhotoMapApp.jsx";
 
 const key = import.meta.env.PUBLIC_MAPTILER_API_KEY;
 const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "";
-
-const items = [
-  { id: "a", lat: 38.0, lon: -87.5, name: "A" },
-  { id: "b", lat: 38.02, lon: -87.52, name: "B" }
-];
 ---
 <html lang="en">
 	<head>
@@ -23,13 +17,10 @@ const items = [
 	<body>
         <HwcHeader client:only="react" title="Crawfordsville Market Street RR Grade Seperation" right={null} children={null} />
         
-        <PhotoPanelWrapper 
+        <PhotoMapApp 
             client:only="react" 
             apiBaseUrl={apiBaseUrl}
+            mapTilerKey={key}
         />
-        
-        <div style="height: 93vh;">
-            <MapWrapper client:only="react" items={items} mapTilerKey={key} />
-        </div>
 	</body>
 </html>

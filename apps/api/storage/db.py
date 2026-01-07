@@ -2,11 +2,11 @@ import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from models.PhotoModel import Photo
-from models.test import TestPhoto
 from storage.az import AzureStorageManager
 from io import BytesIO
 
-load_dotenv()
+# Load environment variables with explicit path
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 
 
@@ -54,7 +54,23 @@ class DatabaseManager:
                 file.filename = get_jpeg_filename(original_filename)
                 print(f"Converted to JPEG: {file.filename}")
             
-            newPhoto = TestPhoto.from_bytes(data, file.filename)  # Create a new Photo object
+            newPhoto = Photo(data)  # Create a new Photo object from bytes
+            newPhoto.filename = file.filename  # Set the correct filename
+            
+            # Debug GPS extraction
+            print(f"Photo location after creation: {newPhoto.location}")
+            if newPhoto.location is None:
+                print("No GPS data found in photo - checking if EXIF exists...")
+                try:
+                    from PIL import Image
+                    import io
+                    with Image.open(io.BytesIO(data)) as img:
+                        exif = img.getexif()
+                        print(f"EXIF data available: {len(exif) > 0}")
+                        if len(exif) > 0:
+                            print(f"EXIF keys: {list(exif.keys())[:10]}...")  # Show first 10 keys
+                except Exception as e:
+                    print(f"Error checking EXIF: {e}")
             
             # Generate thumbnail
             print(f"Generating thumbnail for {file.filename}")
