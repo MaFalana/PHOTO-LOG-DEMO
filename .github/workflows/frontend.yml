@@ -78,38 +78,34 @@ jobs:
       - name: Create or Get Static Web App
         id: swa
         run: |
-          echo "Checking if Static Web App exists..."
+          echo "Checking existing Static Web Apps..."
+          az staticwebapp list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[].{name:name,defaultHostname:defaultHostname}" -o table
           
-          # Check if Static Web App exists and get deployment token
+          # Check if Static Web App exists
           if az staticwebapp show --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
-            echo "Static Web App exists, getting deployment token..."
-            DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.apiKey" -o tsv)
+            echo "Static Web App '${{ env.STATIC_WEB_APP_NAME }}' exists"
           else
             echo "Static Web App doesn't exist, creating..."
-            
-            # Create the Static Web App without GitHub integration to prevent auto-generated workflows
             az staticwebapp create \
               --name ${{ env.STATIC_WEB_APP_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --location "East US 2" \
               --sku Free
             
-            echo "Waiting for Static Web App to be fully provisioned..."
+            echo "Waiting for Static Web App to be ready..."
             sleep 60
-            
-            # Wait for the Static Web App to be ready
-            for i in {1..10}; do
-              if az staticwebapp show --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "repositoryUrl" -o tsv >/dev/null 2>&1; then
-                echo "Static Web App is ready"
-                break
-              fi
-              echo "Waiting for Static Web App to be ready... attempt $i/10"
-              sleep 30
-            done
-            
-            # Get the deployment token
-            DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.apiKey" -o tsv)
           fi
+          
+          # Always reset the deployment token to ensure it's fresh and valid
+          echo "Resetting deployment token to ensure it's fresh..."
+          az staticwebapp secrets reset-api-key --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+          
+          echo "Waiting for token reset to complete..."
+          sleep 15
+          
+          # Get the fresh deployment token
+          echo "Getting fresh deployment token..."
+          DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.apiKey" -o tsv)
           
           # Validate token
           if [ -z "$DEPLOYMENT_TOKEN" ] || [ "$DEPLOYMENT_TOKEN" = "null" ]; then
@@ -119,6 +115,8 @@ jobs:
             exit 1
           fi
           
+          echo "Successfully retrieved fresh deployment token"
+          echo "Token length: ${#DEPLOYMENT_TOKEN}"
           echo "::add-mask::$DEPLOYMENT_TOKEN"
           echo "deployment_token=$DEPLOYMENT_TOKEN" >> $GITHUB_OUTPUT
 
