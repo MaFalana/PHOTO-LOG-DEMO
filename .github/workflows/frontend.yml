@@ -87,16 +87,11 @@ jobs:
           else
             echo "Static Web App doesn't exist, creating..."
             
-            # Create the Static Web App
+            # Create the Static Web App without GitHub integration to prevent auto-generated workflows
             az staticwebapp create \
               --name ${{ env.STATIC_WEB_APP_NAME }} \
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --location "East US 2" \
-              --source https://github.com/${{ github.repository }} \
-              --branch ${{ github.ref_name }} \
-              --app-location "apps/web" \
-              --output-location "dist" \
-              --login-with-github \
               --sku Free
             
             echo "Waiting for Static Web App to be ready..."
