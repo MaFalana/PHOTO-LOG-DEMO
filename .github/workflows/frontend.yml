@@ -18,6 +18,10 @@ on:
       - "package-lock.json"
   workflow_dispatch:
 
+env:
+  STATIC_WEB_APP_NAME: hwc-crawfordsville-frontend
+  AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+
 jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
@@ -57,14 +61,53 @@ jobs:
       - name: Sync Assets
         run: npm run assets:sync
 
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create or Get Static Web App
+        id: swa
+        run: |
+          echo "Checking if Static Web App exists..."
+          
+          # Check if Static Web App exists and get deployment token
+          if az staticwebapp show --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
+            echo "Static Web App exists, getting deployment token..."
+            DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.apiKey" -o tsv)
+          else
+            echo "Static Web App doesn't exist, creating..."
+            
+            # Create the Static Web App
+            az staticwebapp create \
+              --name ${{ env.STATIC_WEB_APP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --location "East US 2" \
+              --source https://github.com/${{ github.repository }} \
+              --branch ${{ github.ref_name }} \
+              --app-location "apps/web" \
+              --output-location "dist" \
+              --login-with-github
+            
+            echo "Waiting for Static Web App to be ready..."
+            sleep 30
+            
+            # Get the deployment token
+            DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.apiKey" -o tsv)
+          fi
+          
+          echo "::add-mask::$DEPLOYMENT_TOKEN"
+          echo "deployment_token=$DEPLOYMENT_TOKEN" >> $GITHUB_OUTPUT
+
       - name: Build And Deploy
         env:
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
           PUBLIC_MAPTILER_API_KEY: ${{ vars.PUBLIC_MAPTILER_API_KEY }}
+          PUBLIC_CESIUM_ION_TOKEN: ${{ vars.PUBLIC_CESIUM_ION_TOKEN }}
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.deployment_token }}
           action: "upload"
           ###### Repository/Build Configurations ######
           app_location: "apps/web" # App source code path
@@ -78,9 +121,21 @@ jobs:
     runs-on: ubuntu-latest
     name: Close Pull Request Job
     steps:
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get Static Web App Token
+        id: swa
+        run: |
+          DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "properties.apiKey" -o tsv)
+          echo "::add-mask::$DEPLOYMENT_TOKEN"
+          echo "deployment_token=$DEPLOYMENT_TOKEN" >> $GITHUB_OUTPUT
+
       - name: Close Pull Request
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.deployment_token }}
           action: "close"
