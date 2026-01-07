@@ -45,18 +45,6 @@ jobs:
           node-version: 20
           cache: "npm"
 
-      - name: Install OIDC Client from Core Package
-        run: npm install @actions/core@1.6.0 @actions/http-client
-
-      - name: Get Id Token
-        uses: actions/github-script@v6
-        id: idtoken
-        with:
-          script: |
-            const coredemo = require('@actions/core')
-            return await coredemo.getIDToken()
-          result-encoding: string
-
       - name: Install Dependencies
         run: npm ci
 
@@ -67,7 +55,6 @@ jobs:
         env:
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
           PUBLIC_MAPTILER_API_KEY: ${{ vars.PUBLIC_MAPTILER_API_KEY }}
-          PUBLIC_CESIUM_ION_TOKEN: ${{ vars.PUBLIC_CESIUM_ION_TOKEN }}
         run: npm --workspace=@hwc/web run build
 
       - name: Log in to Azure
@@ -116,7 +103,6 @@ jobs:
           api_location: "" # Api source code path - optional
           output_location: "dist" # Built app content directory - optional
           skip_app_build: true # We handle the build ourselves
-          github_id_token: ${{ steps.idtoken.outputs.result }}
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
