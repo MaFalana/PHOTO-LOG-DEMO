@@ -1,60 +1,59 @@
+# Git
+.git
+.gitignore
+
 # Environment files
-.env
-.env.test
-.env.prod
+.env*
+env.example
 
-# .gitignore files
-.gitignore.test
-.gitignore.prod
-
-# .dockerignore files
-.dockerignore.test
-.dockerignore.prod
-
-# Dockerfiles
-Dockerfile.test
-Dockerfile.prod
-
-# Build Output and Directories
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+
+# Development and testing
+tests/
+test*.py
 spec/
+dont_need/
+
+# Build artifacts
 dist/
-TEST/
-
-# Vercel
-.vercel
-
-# generated types
-.astro/
-
-# dependencies
-node_modules/
-
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+build/
+*.egg-info/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS Specific Files
+# OS
 .DS_Store
 Thumbs.db
 
-# Other
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
 *.tmp
+*.temp
 *.kmz
 *.kml
 *.zip
-test.py
-test2.py
-test3.py
 
+# Documentation
+README.md
+*.md
 
-scripts/
-tests/
-dont_need/
-.pytest_cache/
+# CI/CD
+.github/

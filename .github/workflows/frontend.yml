@@ -1,4 +1,4 @@
-name: Deploy Astro to Azure Static Web Apps
+name: Azure Static Web Apps CI/CD
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
       - "package.json"
       - "package-lock.json"
   pull_request:
+    types: [opened, synchronize, reopened, closed]
     branches: ["main"]
     paths:
       - "apps/web/**"
@@ -18,30 +19,68 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_and_deploy:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-
+    name: Build and Deploy Job
+    permissions:
+      id-token: write
+      contents: read
+    
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
 
-      - name: Install Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
 
+      - name: Install OIDC Client from Core Package
+        run: npm install @actions/core@1.6.0 @actions/http-client
+
+      - name: Get Id Token
+        uses: actions/github-script@v6
+        id: idtoken
+        with:
+          script: |
+            const coredemo = require('@actions/core')
+            return await coredemo.getIDToken()
+          result-encoding: string
+
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Astro Site
-        run: npm --workspace=@hwc/web run build
+      - name: Sync Assets
+        run: npm run assets:sync
 
-      - name: Deploy to Azure Static Web Apps
+      - name: Build And Deploy
+        env:
+          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+          PUBLIC_MAPTILER_API_KEY: ${{ vars.PUBLIC_MAPTILER_API_KEY }}
+        id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: "upload"
-          app_location: "apps/web"
-          output_location: "dist"
-          api_location: ""
+          ###### Repository/Build Configurations ######
+          app_location: "apps/web" # App source code path
+          api_location: "" # Api source code path - optional
+          output_location: "dist" # Built app content directory - optional
+          github_id_token: ${{ steps.idtoken.outputs.result }}
+          ###### End of Repository/Build Configurations ######
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: "close"

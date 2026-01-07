@@ -1,43 +1,27 @@
-name: Build & Deploy Container App
+name: Build & Deploy FastAPI to Azure
 
 on:
   push:
     branches: ["main"]
     paths:
       - "apps/api/**"
-      - "packages/**"
-      - "package.json"
-      - "package-lock.json"
-      - "Dockerfile"
-      - "apps/api/Dockerfile"
   workflow_dispatch:
 
 env:
-  DOCKER_IMAGE: mfalana/hwc-xxx-xxx
-  CONTAINER_APP: hwc-xxx-xxx
-  RESOURCE_GROUP: LiDAR-Breakline-Generator
+  DOCKER_IMAGE: mfalana/hwc-crawfordsville-api
+  CONTAINER_NAME: hwc-crawfordsville-api
+
+concurrency:
+  group: dockerhub-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-${{ github.ref }}
-      cancel-in-progress: true
-
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Build App
-        run: npm run build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -48,10 +32,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & Push Docker Image
+      - name: Build & push (latest + sha)
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: apps/api
           push: true
           tags: |
             docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }}
@@ -66,24 +50,42 @@ jobs:
 
       - name: Create or Update Azure Container App
         run: |
-          echo "Deploying to Azure Container Apps..."
-
+          echo "Checking if Container App exists..."
+          
           # Check if container app exists
-          if az containerapp show \
-            --name ${{ env.CONTAINER_APP }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} > /dev/null 2>&1; then
-              echo "Container App exists. Updating..."
-              az containerapp update \
-                --name ${{ env.CONTAINER_APP }} \
-                --resource-group ${{ env.RESOURCE_GROUP }} \
-                --image docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          if az containerapp show --name ${{ env.CONTAINER_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
+            echo "Container App exists, updating..."
+            az containerapp update \
+              --name ${{ env.CONTAINER_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --image docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }}
           else
-              echo "Container App does NOT exist. Creating..."
-              az containerapp create \
-                --name ${{ env.CONTAINER_APP }} \
-                --resource-group ${{ env.RESOURCE_GROUP }} \
-                --image docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }} \
-                --environment ${{ secrets.AZURE_CONTAINER_ENVIRONMENT }}
+            echo "Container App doesn't exist, creating..."
+            
+            # Get or create container app environment
+            ENV_NAME="${{ env.CONTAINER_NAME }}-env"
+            if ! az containerapp env show --name $ENV_NAME --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
+              echo "Creating Container App Environment..."
+              az containerapp env create \
+                --name $ENV_NAME \
+                --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+                --location eastus
+            fi
+            
+            # Create the container app
+            az containerapp create \
+              --name ${{ env.CONTAINER_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --environment $ENV_NAME \
+              --image docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }} \
+              --target-port 8000 \
+              --ingress external \
+              --min-replicas 0 \
+              --max-replicas 3 \
+              --cpu 0.25 \
+              --memory 0.5Gi \
+              --env-vars PORT=8000
           fi
-
-          echo "Deployment complete."
+          
+          echo "Deployment completed successfully!"
+          echo "Image: docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }}"
