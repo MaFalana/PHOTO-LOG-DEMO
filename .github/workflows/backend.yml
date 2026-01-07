@@ -52,27 +52,44 @@ jobs:
         run: |
           echo "Checking if Container App exists..."
           
+          # Use existing Container App Environment
+          ENV_NAME="LiDAR-CONTAINER"
+          
+          # Clean up any failed environments from previous runs
+          FAILED_ENV="${{ env.CONTAINER_NAME }}-env"
+          if az containerapp env show --name $FAILED_ENV --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
+            echo "Found failed environment $FAILED_ENV, cleaning up..."
+            az containerapp env delete --name $FAILED_ENV --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --yes || true
+          fi
+          
           # Check if container app exists
           if az containerapp show --name ${{ env.CONTAINER_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
             echo "Container App exists, updating..."
             az containerapp update \
               --name ${{ env.CONTAINER_NAME }} \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --image docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+              --image docker.io/${{ env.DOCKER_IMAGE }}:${{ github.sha }} \
+              --set-env-vars \
+                PORT=8000 \
+                MONGO_CONNECTION_STRING="${{ secrets.MONGO_CONNECTION_STRING }}" \
+                MONGO_COLLECTION_NAME="${{ vars.MONGO_COLLECTION_NAME }}" \
+                AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
+                AZURE_STORAGE_CONTAINER_NAME="${{ vars.AZURE_STORAGE_CONTAINER_NAME }}" \
+                NAME="${{ vars.PROJECT_NAME }}"
           else
-            echo "Container App doesn't exist, creating..."
+            echo "Container App doesn't exist, creating in existing environment: $ENV_NAME"
             
-            # Get or create container app environment
-            ENV_NAME="${{ env.CONTAINER_NAME }}-env"
+            # Verify the environment exists
             if ! az containerapp env show --name $ENV_NAME --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
-              echo "Creating Container App Environment..."
-              az containerapp env create \
-                --name $ENV_NAME \
-                --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-                --location eastus
+              echo "ERROR: Container App Environment '$ENV_NAME' not found!"
+              echo "Available environments:"
+              az containerapp env list --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query "[].name" -o table
+              exit 1
             fi
             
-            # Create the container app
+            echo "Environment '$ENV_NAME' found, creating container app..."
+            
+            # Create the container app in existing environment
             az containerapp create \
               --name ${{ env.CONTAINER_NAME }} \
               --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
@@ -84,7 +101,13 @@ jobs:
               --max-replicas 3 \
               --cpu 0.25 \
               --memory 0.5Gi \
-              --env-vars PORT=8000
+              --env-vars \
+                PORT=8000 \
+                MONGO_CONNECTION_STRING="${{ secrets.MONGO_CONNECTION_STRING }}" \
+                MONGO_COLLECTION_NAME="${{ vars.MONGO_COLLECTION_NAME }}" \
+                AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
+                AZURE_STORAGE_CONTAINER_NAME="${{ vars.AZURE_STORAGE_CONTAINER_NAME }}" \
+                NAME="${{ vars.PROJECT_NAME }}"
           fi
           
           echo "Deployment completed successfully!"
