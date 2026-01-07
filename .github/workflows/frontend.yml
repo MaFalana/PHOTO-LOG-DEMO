@@ -75,23 +75,32 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Create Static Web App if needed
+      - name: Debug deployment token
         run: |
-          echo "Checking if Static Web App exists..."
-          if ! az staticwebapp show --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
-            echo "Creating new Static Web App..."
-            az staticwebapp create \
-              --name ${{ env.STATIC_WEB_APP_NAME }} \
-              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --location "East US 2" \
-              --sku Free
-            
-            echo "Static Web App created. Please get the deployment token from Azure portal and add it as AZURE_STATIC_WEB_APPS_API_TOKEN secret."
-            echo "Static Web App URL will be available shortly at:"
-            az staticwebapp show --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "defaultHostname" -o tsv || echo "URL not ready yet"
-          else
-            echo "Static Web App already exists"
+          echo "Checking token format..."
+          if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
+            echo "ERROR: AZURE_STATIC_WEB_APPS_API_TOKEN secret is empty or not set"
+            exit 1
           fi
+          
+          TOKEN_LENGTH=${#AZURE_STATIC_WEB_APPS_API_TOKEN}
+          echo "Token length: $TOKEN_LENGTH"
+          
+          # Check if token starts with expected format (should start with alphanumeric)
+          if [[ "$AZURE_STATIC_WEB_APPS_API_TOKEN" =~ ^[a-zA-Z0-9] ]]; then
+            echo "Token format looks correct"
+          else
+            echo "WARNING: Token format might be incorrect"
+          fi
+        env:
+          AZURE_STATIC_WEB_APPS_API_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+
+      - name: Verify Static Web App details
+        run: |
+          echo "Static Web App details:"
+          az staticwebapp show --name ${{ env.STATIC_WEB_APP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "{name:name,defaultHostname:defaultHostname,repositoryUrl:repositoryUrl}" -o table
+          
+          echo "Checking if this matches your token source..."
 
       - name: Build And Deploy
         env:
