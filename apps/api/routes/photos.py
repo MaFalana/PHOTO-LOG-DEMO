@@ -15,7 +15,7 @@ photo_router = APIRouter(
 ) # Initialize the router
 
 
-@photo_router.get('/') # Index Route gets a list of all photos with pagination
+@photo_router.get('') # Index Route gets a list of all photos with pagination
 async def get_all_photos(
     page: int = 1,
     limit: int = 20,
