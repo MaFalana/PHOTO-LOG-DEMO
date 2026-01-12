@@ -112,7 +112,7 @@ export function HwcMap({
   initialCenter = [0, 0],
   initialZoom = 2,
   minZoom = 2,
-  maxZoom = 18,
+  maxZoom,
   fitBoundsOnLoad = true,
 
   // Layers
