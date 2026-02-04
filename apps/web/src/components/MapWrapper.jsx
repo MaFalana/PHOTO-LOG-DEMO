@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { HwcMap } from '@hwc/map';
 
-export function MapWrapper({ 
-  mapTilerKey, 
-  selectedPhotoIds = [], 
+export function MapWrapper({
+  mapTilerKey,
+  mapboxToken,
+  selectedPhotoIds = [],
   onMarkerClick,
   refreshTrigger = 0,
-  apiBaseUrl 
+  apiBaseUrl,
+  maxZoom = 22,
+  filters = {}
 }) {
   const [baseLayer, setBaseLayer] = useState('streets');
   const [photoMarkers, setPhotoMarkers] = useState([]);
@@ -17,16 +20,30 @@ export function MapWrapper({
   const fetchPhotoMarkers = async () => {
     try {
       setLoading(true);
-      console.log('MapWrapper: Fetching photo markers from', `${apiBaseUrl}/photos/markers`);
-      const response = await fetch(`${apiBaseUrl}/photos/markers`);
-      
+
+      // Build query parameters for filtering
+      const params = new URLSearchParams();
+
+      if (filters.startDate) {
+        params.append('start_date', filters.startDate);
+      }
+      if (filters.endDate) {
+        params.append('end_date', filters.endDate);
+      }
+      if (filters.tags && filters.tags.length > 0) {
+        params.append('tags', filters.tags.join(','));
+      }
+
+      const url = `${apiBaseUrl}/photos/markers${params.toString() ? `?${params.toString()}` : ''}`;
+
+      const response = await fetch(url);
+
       if (!response.ok) {
         throw new Error(`Failed to fetch photo markers: ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('MapWrapper: Received markers data:', data);
-      
+
       // Transform API response to map format
       const markers = data.markers.map(photo => ({
         id: photo._id,
@@ -34,13 +51,12 @@ export function MapWrapper({
         lon: photo.location?.lon,
         name: photo.filename,
         photo: photo // Keep full photo data for reference
-      })).filter(marker => 
+      })).filter(marker =>
         // Only include photos with valid GPS coordinates
         marker.lat != null && marker.lon != null &&
         Number.isFinite(marker.lat) && Number.isFinite(marker.lon)
       );
 
-      console.log('MapWrapper: Transformed markers:', markers);
       setPhotoMarkers(markers);
       setError(null);
     } catch (err) {
@@ -51,13 +67,12 @@ export function MapWrapper({
     }
   };
 
-  // Fetch markers on mount and when refresh trigger changes
+  // Fetch markers on mount and when refresh trigger or filters change
   useEffect(() => {
-    console.log('MapWrapper: refreshTrigger changed to:', refreshTrigger, 'apiBaseUrl:', apiBaseUrl);
     if (apiBaseUrl) {
       fetchPhotoMarkers();
     }
-  }, [apiBaseUrl, refreshTrigger]);
+  }, [apiBaseUrl, refreshTrigger, filters.startDate, filters.endDate, filters.tags]);
 
   // Handle marker clicks
   const handleMarkerClick = (markerId, marker) => {
@@ -73,15 +88,22 @@ export function MapWrapper({
   ];
 
   return (
-    <HwcMap 
+    <HwcMap
       items={items}
       mapTilerKey={mapTilerKey}
+      mapboxToken={mapboxToken}
       baseLayer={baseLayer}
       onBaseLayerChange={setBaseLayer}
       selectedIds={selectedPhotoIds}
       onSelect={handleMarkerClick}
       showControls={true}
       cluster={true}
+      clusterOptions={{
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        disableClusteringAtZoom: 22
+      }}
+      maxZoom={maxZoom}
     />
   );
 }

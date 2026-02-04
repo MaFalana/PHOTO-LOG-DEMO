@@ -23,7 +23,9 @@ async def get_all_photos(
     order: str = "desc",
     year: Optional[int] = None,
     month: Optional[int] = None,
-    tags: Optional[str] = None
+    tags: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
 ):
     """
     Get paginated list of photos with optional filtering
@@ -36,6 +38,8 @@ async def get_all_photos(
         year: Optional year filter (4-digit integer)
         month: Optional month filter (1-12, requires year)
         tags: Optional comma-separated tags filter
+        start_date: Optional start date (YYYY-MM-DD format)
+        end_date: Optional end date (YYYY-MM-DD format)
     """
     # Validate year parameter
     if year is not None and (year < 1000 or year > 9999):
@@ -75,7 +79,9 @@ async def get_all_photos(
         order=order,
         year=year,
         month=month,
-        tags=tags_list
+        tags=tags_list,
+        start_date=start_date,
+        end_date=end_date
     )
     
     data = {
@@ -119,12 +125,64 @@ async def get_all_tags():
         )
 
 @photo_router.get('/markers') # Get lightweight photo markers for map display
-async def get_photo_markers():
+async def get_photo_markers(
+    year: Optional[int] = None,
+    month: Optional[int] = None,
+    tags: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
+):
     """
     Get minimal photo data for map markers (location, id, thumbnail only)
     Much faster than loading full photo data
+    
+    Args:
+        year: Optional year filter (4-digit integer)
+        month: Optional month filter (1-12, requires year)
+        tags: Optional comma-separated tags filter
+        start_date: Optional start date (YYYY-MM-DD format)
+        end_date: Optional end date (YYYY-MM-DD format)
     """
-    photos = DB.getPhotos({})
+    # Validate parameters (same as get_all_photos)
+    if year is not None and (year < 1000 or year > 9999):
+        raise HTTPException(
+            status_code=400,
+            detail="Year must be a valid 4-digit integer"
+        )
+    
+    if month is not None and (month < 1 or month > 12):
+        raise HTTPException(
+            status_code=400,
+            detail="Month must be between 1 and 12"
+        )
+    
+    if month is not None and year is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Month filter requires year to be specified"
+        )
+    
+    # Parse tags
+    tags_list = None
+    if tags is not None:
+        tags_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
+    
+    # Get filtered photos using the same filtering logic as get_all_photos
+    # But we'll use getPhotosPaginated with a large limit to get all matching photos
+    result = DB.getPhotosPaginated(
+        query={},
+        page=1,
+        limit=10000,  # Large limit to get all markers
+        sort_by="timestamp",
+        order="desc",
+        year=year,
+        month=month,
+        tags=tags_list,
+        start_date=start_date,
+        end_date=end_date
+    )
+    
+    photos = result['photos']
     
     # Return only essential data for map markers
     markers = []

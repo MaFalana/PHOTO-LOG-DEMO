@@ -31,11 +31,11 @@ async def export_zip(payload: list[str] = Query(..., description="Photo IDs")):
     return zip
 
 @export_router.get('/kml') # KML Export Route
-async def export_kml(payload): # receive parameters for export such as an array of ids
+async def export_kml(payload: list[str] = Query(..., description="Photo IDs")): # receive parameters for export such as an array of ids
 
     photos = DB.getPhotosList(payload) # receive list of photos from DB using those ids
 
-    output = EX.create_kmz(photos) # create KML file using those photos
+    output = EX.create_kml(photos) # create KML file using those photos
 
     file = FileResponse(
         output,
@@ -43,20 +43,13 @@ async def export_kml(payload): # receive parameters for export such as an array 
         filename= output.split("/")[-1]
     )
 
-    
-    data = {
-        "Message": f"Successfully created KML file with {len(photos)} photo(s)",
-        "Input": payload,
-        "Output": output
-    }
-
     return file
 
 
 @export_router.get('/kmz') # KMZ Export Route
-async def export_kmz(payload: list[str] = Query(..., description="Photo IDs")): # recieve parameters for export such as an array of ids
+async def export_kmz(payload: list[str] = Query(..., description="Photo IDs")): # receive parameters for export such as an array of ids
 
-    photos = DB.getPhotosList(payload) # recieve list of photos from DB using those ids
+    photos = DB.getPhotosList(payload) # receive list of photos from DB using those ids
 
     output = EX.create_kmz(photos) # create KMZ file using those photos
 
@@ -65,11 +58,5 @@ async def export_kmz(payload: list[str] = Query(..., description="Photo IDs")): 
         media_type="application/vnd.google-earth.kmz",
         filename= output.split("/")[-1]
     )
-    
-    data = {
-        "Message": f"Successfully created KMZ file with {len(photos)} photo(s)",
-        "Input": payload,
-        "Output": file
-    }
 
     return file

@@ -50,6 +50,7 @@ function App() {
       isOpen={isOpen}
       onToggle={() => setIsOpen(!isOpen)}
       title="Tools Panel"
+      position="left"
       toggleLabel="Open Tools"
     >
       <PanelSection
@@ -74,6 +75,20 @@ function App() {
 }
 ```
 
+## Position Options
+
+The panel can be positioned on either side of the screen:
+
+```jsx
+// Left side (default)
+<HwcPanel position="left" {...props} />
+
+// Right side (useful when map controls are on the right)
+<HwcPanel position="right" {...props} />
+```
+
+On mobile (<768px), the panel always displays as a bottom drawer regardless of the `position` prop.
+
 ## API Reference
 
 ### HwcPanel
@@ -83,6 +98,7 @@ function App() {
 | `isOpen` | `boolean` | - | Controls panel visibility |
 | `onToggle` | `function` | - | Called when panel is opened/closed |
 | `title` | `string` | `"Panel"` | Panel header title |
+| `position` | `string` | `"left"` | Panel position: `"left"` or `"right"` |
 | `toggleLabel` | `string` | `"Open Panel"` | Accessibility label for toggle button |
 | `children` | `ReactNode` | - | Panel content (typically PanelSection components) |
 
@@ -128,9 +144,14 @@ The package includes styled form element classes:
 
 ## Responsive Behavior
 
-- **Desktop (>768px)**: Fixed left sidebar, 300px wide
-- **Mobile (≤768px)**: Bottom drawer, full width, max 70vh height
-- **Toggle button**: Left edge tab on desktop, bottom center on mobile
+- **Desktop (>768px)**: Fixed sidebar, 300px wide
+  - `position="left"`: Left edge with right border
+  - `position="right"`: Right edge with left border
+- **Mobile (≤768px)**: Bottom drawer, full width, max 70vh height (position prop ignored)
+- **Toggle button**: 
+  - Desktop left: Left edge tab pointing right
+  - Desktop right: Right edge tab pointing left
+  - Mobile: Bottom center button
 
 ## Integration with Astro
 
@@ -145,3 +166,23 @@ import { HwcPanel, PanelSection } from '@hwc/panel';
   </PanelSection>
 </HwcPanel>
 ```
+
+## Using with @hwc/map
+
+When using the panel alongside the map component, consider positioning to avoid control conflicts:
+
+```astro
+---
+import { HwcMap } from '@hwc/map';
+import { HwcPanel } from '@hwc/panel';
+---
+
+<!-- Map controls are bottom-right, so left panel works well -->
+<HwcPanel client:only="react" position="left" {...panelProps} />
+<HwcMap client:only="react" {...mapProps} />
+
+<!-- Or use right panel if you have left-side controls -->
+<HwcPanel client:only="react" position="right" {...panelProps} />
+```
+
+The map's zoom controls and layer toggles are positioned at `bottom-right`, so they won't conflict with either panel position.

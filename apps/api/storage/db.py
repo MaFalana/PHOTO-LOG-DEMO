@@ -112,7 +112,7 @@ class DatabaseManager:
         print(f"Found photos: {photos}")
         return photos
 
-    def getPhotosPaginated(self, query, page=1, limit=20, sort_by="timestamp", order="desc", year=None, month=None, tags=None):
+    def getPhotosPaginated(self, query, page=1, limit=20, sort_by="timestamp", order="desc", year=None, month=None, tags=None, start_date=None, end_date=None):
         """
         Get paginated photos from database with optional filtering
         
@@ -125,11 +125,13 @@ class DatabaseManager:
             year: Optional year filter (int)
             month: Optional month filter (int, 1-12)
             tags: Optional list of tags to filter by
+            start_date: Optional start date string (YYYY-MM-DD)
+            end_date: Optional end date string (YYYY-MM-DD)
         
         Returns:
             dict with photos and pagination info
         """
-        from datetime import datetime
+        from datetime import datetime, timedelta
         
         try:
             # Build filter conditions
@@ -139,25 +141,42 @@ class DatabaseManager:
             if query:
                 filter_conditions.append(query)
             
-            # Add date range filtering
-            if year is not None:
+            # Add date range filtering - prioritize exact dates over year/month
+            if start_date or end_date:
+                # Use exact date range if provided
+                date_filter = {}
+                if start_date:
+                    # Parse start date and set to beginning of day
+                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                    date_filter["$gte"] = start_dt
+                if end_date:
+                    # Parse end date and set to end of day
+                    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                    # Add one day and use $lt to include the entire end date
+                    end_dt = end_dt + timedelta(days=1)
+                    date_filter["$lt"] = end_dt
+                
+                if date_filter:
+                    filter_conditions.append({"timestamp": date_filter})
+            elif year is not None:
+                # Fall back to year/month filtering if no exact dates
                 if month is not None:
                     # Filter by specific year and month
-                    start_date = datetime(year, month, 1)
+                    start_date_dt = datetime(year, month, 1)
                     # Calculate next month for end date
                     if month == 12:
-                        end_date = datetime(year + 1, 1, 1)
+                        end_date_dt = datetime(year + 1, 1, 1)
                     else:
-                        end_date = datetime(year, month + 1, 1)
+                        end_date_dt = datetime(year, month + 1, 1)
                 else:
                     # Filter by year only
-                    start_date = datetime(year, 1, 1)
-                    end_date = datetime(year + 1, 1, 1)
+                    start_date_dt = datetime(year, 1, 1)
+                    end_date_dt = datetime(year + 1, 1, 1)
                 
                 filter_conditions.append({
                     "timestamp": {
-                        "$gte": start_date,
-                        "$lt": end_date
+                        "$gte": start_date_dt,
+                        "$lt": end_date_dt
                     }
                 })
             

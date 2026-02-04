@@ -91,6 +91,68 @@ const items = [
 </div>
 ```
 
+## Ortho Overlays
+
+### GeoTIFF/COG Overlay
+
+Add ortho imagery overlay with embedded georeferencing:
+
+```astro
+---
+import { HwcMap, OrthoLayer } from "@hwc/map";
+---
+
+<HwcMap client:only="react" items={items}>
+  <OrthoLayer 
+    url="https://cdn.com/ortho.tif"
+    opacity={0.9}
+    onLoad={(georaster) => console.log('Loaded!', georaster)}
+    onError={(error) => console.error('Error:', error)}
+  />
+</HwcMap>
+```
+
+The OrthoLayer component:
+- Loads GeoTIFF/COG files with embedded georeferencing
+- Automatically fits map bounds to ortho extent
+- Supports RGB imagery
+- Requires proj4 for coordinate transformation (loaded from Potree if available)
+
+### Simple Image Overlay
+
+For faster loading and smaller file sizes, use JPG/PNG images with explicit bounds:
+
+```astro
+---
+import { HwcMap, ImageOrthoLayer } from "@hwc/map";
+---
+
+<HwcMap client:only="react" items={items}>
+  <ImageOrthoLayer 
+    url="https://cdn.com/ortho.jpg"
+    bounds={[[38.0, -87.5], [38.02, -87.48]]} // [[south, west], [north, east]]
+    opacity={0.9}
+  />
+</HwcMap>
+```
+
+**Auto-calculate bounds from point cloud:**
+
+```jsx
+<ImageOrthoLayer 
+  url={project.ortho.url}
+  pointCloudBounds={project.cloud.bounds}
+  crs={project.crs}
+  opacity={0.9}
+/>
+```
+
+The ImageOrthoLayer component:
+- Much faster and simpler than GeoTIFF approach
+- Supports JPG/PNG images
+- Can auto-calculate bounds from point cloud using proj4
+- Optional - only loads if ortho data is provided
+
 ### The items contract
 The map renders items, not “projects”, “photos”, or “jobs”.
 By default, an item is expected to look like:
@@ -145,19 +207,52 @@ Example:
 />
 ```
 
-## Base layers
-Two base layers are supported:
-- ```"streets"``` (OpenStreetMap)
-- ```"satellite"``` (MapTiler, optional)
-Satellite support is enabled by passing a key from the app:
+## Base Layers
+
+Multiple tile providers are available with consistent max zoom support:
+
+### Streets (OpenStreetMap)
+- **Provider**: OpenStreetMap
+- **Cost**: Free, unlimited
+- **Coverage**: Global
+- **Max Zoom**: Configurable (default 22, tiles available to ~19)
+- **Best for**: Street maps with labels
+
+### Satellite (ESRI World Imagery)
+- **Provider**: ESRI/Maxar
+- **Cost**: Free, unlimited (no API key needed)
+- **Quality**: High resolution
+- **Coverage**: Global
+- **Max Zoom**: Configurable (default 22, tiles available to ~19)
+- **Best for**: Free satellite imagery
+
+### Satellite (Mapbox)
+- **Provider**: Mapbox
+- **Cost**: Free tier (200k tile requests/month), requires API key
+- **Quality**: Very high resolution
+- **Coverage**: Global
+- **Max Zoom**: Configurable (default 22, tiles available to 22)
+- **Best for**: High-resolution satellite imagery with better zoom
+- **Setup**: Add `PUBLIC_MAPBOX_TOKEN` to your .env file
+
+### Satellite (Google)
+- **Provider**: Google Maps
+- **Cost**: Free (uses public tile endpoint)
+- **Quality**: High resolution
+- **Coverage**: Global
+- **Max Zoom**: Configurable (default 22, tiles available to ~21)
+- **Best for**: Alternative high-resolution satellite imagery
+- **Note**: No API key required for basic usage
 
 ```jsx
 <HwcMap
   items={items}
-  mapTilerKey={import.meta.env.PUBLIC_MAPTILER_API_KEY}
+  baseLayer="satellite-google"  // or "streets", "satellite", "satellite-mapbox"
+  maxZoom={22}
 />
 ```
-The package never reads environment variables directly.
+
+All layers now support the same maxZoom configuration for consistent behavior across providers.
 
 ## Clustering
 Marker clustering is enabled by default.

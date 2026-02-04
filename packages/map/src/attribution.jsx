@@ -1,4 +1,32 @@
-export function MapAttribution() {
+export function MapAttribution({ baseLayer = 'streets' }) {
+  const getAttribution = () => {
+    switch (baseLayer) {
+      case 'satellite':
+        return {
+          text: '© MapTiler © OpenStreetMap contributors',
+          url: 'https://www.maptiler.com/copyright/'
+        };
+      case 'satellite-mapbox':
+        return {
+          text: '© Mapbox © Maxar',
+          url: 'https://www.mapbox.com/'
+        };
+      case 'satellite-google':
+        return {
+          text: '© Google',
+          url: 'https://www.google.com/permissions/geoguidelines/'
+        };
+      case 'streets':
+      default:
+        return {
+          text: '© OpenStreetMap contributors',
+          url: 'https://www.openstreetmap.org/'
+        };
+    }
+  };
+
+  const attribution = getAttribution();
+
   return (
     <div className="hwc-map-attribution">
       <a href="https://www.hwcengineering.com/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -6,21 +34,12 @@ export function MapAttribution() {
       </a>
       {' | '}
       <a
-        href="https://www.maptiler.com/"
+        href={attribution.url}
         target="_blank"
         rel="noopener noreferrer"
         style={{ color: 'inherit' }}
       >
-        © MapTiler
-      </a>
-      {' | '}
-      <a
-        href="https://www.openstreetmap.org/"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: 'inherit' }}
-      >
-        © OpenStreetMap contributors
+        {attribution.text}
       </a>
     </div>
   );

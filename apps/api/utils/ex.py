@@ -12,9 +12,11 @@ from routes.photos import DB
 class ExportManager:
     def __init__(self):
         self.az = DB.az  # Use the AzureStorageManager from DatabaseManager
-        self.defaultIcon = "./assets/hwc-map-icon.png"
-        self.blueIcon = "./assets/hwc-map-icon-blue.png"
-        self.greenIcon = "./assets/hwc-map-icon-green.png"
+        # Use absolute URLs for icons so they work in KML/KMZ files
+        self.base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
+        self.defaultIcon = f"{self.base_url}/assets/hwc-map-icon.png"
+        self.blueIcon = f"{self.base_url}/assets/hwc-map-icon-blue.png"
+        self.greenIcon = f"{self.base_url}/assets/hwc-map-icon-green.png"
 
     # ---------- Helpers ----------
     def _make_style(self, kml, icon_path, scale):

@@ -2,12 +2,10 @@
 .hwc-panel {
   position: fixed;
   top: var(--header-h, 0);
-  left: 0;
   bottom: 0;
   width: 300px;
   height: calc(100vh - var(--header-h, 0));
   background: var(--hdr-bg, rgba(41, 44, 48, 0.95));
-  border-right: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.1));
   border-radius: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(8px);
@@ -18,6 +16,18 @@
   overflow: hidden;
   transition: transform 0.3s ease;
   padding: 0;
+}
+
+/* Left position (default) */
+.hwc-panel.left {
+  left: 0;
+  border-right: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.1));
+}
+
+/* Right position */
+.hwc-panel.right {
+  right: 0;
+  border-left: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.1));
 }
 
 /* Panel Header */
@@ -76,17 +86,13 @@
   min-height: 0;
 }
 
-/* Panel Toggle Button (when collapsed) - Tab on left edge */
+/* Panel Toggle Button (when collapsed) - Tab on edge */
 .hwc-panel-toggle {
   position: fixed;
   top: calc(var(--header-h, 0) + 50%);
-  left: 0;
   transform: translateY(-50%);
   background: var(--hdr-bg, rgba(41, 44, 48, 0.95));
   border: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.1));
-  border-left: none;
-  border-top-right-radius: 0.5rem;
-  border-bottom-right-radius: 0.5rem;
   padding: 1.5rem 0.5rem;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(8px);
@@ -100,10 +106,33 @@
   z-index: 1100;
 }
 
+/* Left position toggle */
+.hwc-panel-toggle.left {
+  left: 0;
+  border-left: none;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+.hwc-panel-toggle.left:hover {
+  padding-right: 0.75rem;
+}
+
+/* Right position toggle */
+.hwc-panel-toggle.right {
+  right: 0;
+  border-right: none;
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+.hwc-panel-toggle.right:hover {
+  padding-left: 0.75rem;
+}
+
 .hwc-panel-toggle:hover {
   background: rgba(26, 28, 32, 0.95);
   border-color: var(--accent, var(--hwc-red, #EE2F27));
-  padding-right: 0.75rem;
 }
 
 .hwc-panel-toggle:active {
@@ -113,7 +142,16 @@
 .hwc-panel-toggle svg {
   width: 16px;
   height: 16px;
+}
+
+/* Left panel: chevron points right (rotate 180deg from left-pointing) */
+.hwc-panel-toggle.left svg {
   transform: rotate(180deg);
+}
+
+/* Right panel: chevron points left (no rotation needed) */
+.hwc-panel-toggle.right svg {
+  transform: none;
 }
 
 /* Panel Section */
@@ -304,7 +342,17 @@
     max-height: 70vh;
     border-radius: 0.75rem 0.75rem 0 0;
     border-right: none;
+    border-left: none;
     border-top: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.1));
+  }
+
+  /* Mobile ignores position prop - always bottom drawer */
+  .hwc-panel.left,
+  .hwc-panel.right {
+    left: 0;
+    right: 0;
+    border-right: none;
+    border-left: none;
   }
 
   .hwc-panel-toggle {
@@ -318,8 +366,22 @@
     padding: 0.75rem 1.5rem;
   }
 
+  /* Mobile toggle ignores position */
+  .hwc-panel-toggle.left,
+  .hwc-panel-toggle.right {
+    left: 50%;
+    right: auto;
+    border: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.1));
+    border-radius: 0.5rem;
+  }
+
   .hwc-panel-toggle:hover {
     transform: translateX(-50%) scale(1.02);
+    padding: 0.75rem 1.5rem;
+  }
+
+  .hwc-panel-toggle.left:hover,
+  .hwc-panel-toggle.right:hover {
     padding: 0.75rem 1.5rem;
   }
 
@@ -328,7 +390,13 @@
   }
 
   .hwc-panel-toggle svg {
-    transform: rotate(90deg);
+    transform: rotate(90deg) !important;
+    /* Point up on mobile, override desktop direction */
+  }
+
+  /* Hide toggle on mobile when specified (for multi-panel layouts) */
+  .hwc-panel-toggle.hide-on-mobile {
+    display: none;
   }
 
   .hwc-panel-header h3 {
