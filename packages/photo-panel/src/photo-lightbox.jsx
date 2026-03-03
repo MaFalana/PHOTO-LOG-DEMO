@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiEdit3, FiTrash2, FiDownload, FiMapPin, FiCalendar, FiTag, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FaPlus, FaMinus } from 'react-icons/fa6';
+import { MdCenterFocusStrong } from 'react-icons/md';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 export function PhotoLightbox({
   photo,
@@ -256,36 +259,97 @@ export function PhotoLightbox({
               <div className="loading-spinner" />
             </div>
           )}
-          <img
-            src={photo.url || photo.thumbnail}
-            alt={photo.filename}
-            loading="lazy"
-            onLoad={() => setImageLoading(false)}
-            onError={() => setImageLoading(false)}
-            style={{ opacity: imageLoading ? 0.5 : 1 }}
-          />
 
-          {/* Navigation Arrows - positioned relative to image */}
-          {showNavigation && (
-            <>
-              <button
-                className={`photo-nav-btn photo-nav-prev ${!canNavigatePrevious ? 'disabled' : ''}`}
-                onClick={navigatePrevious}
-                disabled={!canNavigatePrevious}
-                title="Previous photo (← or Left Arrow)"
-              >
-                <FiChevronLeft />
-              </button>
-              <button
-                className={`photo-nav-btn photo-nav-next ${!canNavigateNext ? 'disabled' : ''}`}
-                onClick={navigateNext}
-                disabled={!canNavigateNext}
-                title="Next photo (→ or Right Arrow)"
-              >
-                <FiChevronRight />
-              </button>
-            </>
-          )}
+          <TransformWrapper
+            initialScale={1}
+            minScale={0.5}
+            maxScale={6}
+            centerOnInit={true}
+            wheel={{ step: 0.1 }}
+            doubleClick={{ mode: 'reset' }}
+            panning={{ velocityDisabled: true }}
+          >
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <>
+                {/* Zoom Controls */}
+                <div className="photo-zoom-controls">
+                  <button
+                    className="zoom-btn"
+                    onClick={() => zoomOut()}
+                    title="Zoom out"
+                  >
+                    <FaMinus />
+                  </button>
+                  <button
+                    className="zoom-btn"
+                    onClick={() => resetTransform()}
+                    title="Reset zoom (or double-click image)"
+                  >
+                    <MdCenterFocusStrong />
+                  </button>
+                  <button
+                    className="zoom-btn"
+                    onClick={() => zoomIn()}
+                    title="Zoom in"
+                  >
+                    <FaPlus />
+                  </button>
+                </div>
+
+                <TransformComponent
+                  wrapperStyle={{
+                    width: '100%',
+                    height: '100%',
+                    cursor: 'grab'
+                  }}
+                  contentStyle={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <img
+                    src={photo.url || photo.thumbnail}
+                    alt={photo.filename}
+                    loading="lazy"
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => setImageLoading(false)}
+                    style={{
+                      opacity: imageLoading ? 0.5 : 1,
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      userSelect: 'none'
+                    }}
+                  />
+                </TransformComponent>
+
+                {/* Navigation Arrows - positioned relative to image */}
+                {showNavigation && (
+                  <>
+                    <button
+                      className={`photo-nav-btn photo-nav-prev ${!canNavigatePrevious ? 'disabled' : ''}`}
+                      onClick={navigatePrevious}
+                      disabled={!canNavigatePrevious}
+                      title="Previous photo (← or Left Arrow)"
+                    >
+                      <FiChevronLeft />
+                    </button>
+                    <button
+                      className={`photo-nav-btn photo-nav-next ${!canNavigateNext ? 'disabled' : ''}`}
+                      onClick={navigateNext}
+                      disabled={!canNavigateNext}
+                      title="Next photo (→ or Right Arrow)"
+                    >
+                      <FiChevronRight />
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </TransformWrapper>
         </div>
 
         {/* Metadata */}

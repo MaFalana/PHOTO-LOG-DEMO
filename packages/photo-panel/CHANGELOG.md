@@ -1,5 +1,22 @@
 # @hwc/photo-panel Changelog
 
+## [0.2.0] - 2026-03-03
+
+### Added
+- Zoom and pan functionality in photo lightbox
+- Mouse wheel zoom support
+- Pinch-to-zoom on mobile devices
+- Click and drag to pan around zoomed images
+- Zoom controls (+/-) buttons
+- Reset zoom button (double-click also resets)
+- Zoom limits: 0.5x to 6x scale for detailed inspection
+- Smooth zoom and pan animations
+
+### Changed
+- Lightbox now uses `react-zoom-pan-pinch` for better image viewing experience
+- Users can now see full extent of images with zoom controls
+- Improved mobile touch interactions
+
 ## [0.1.0] - 2026-03-03
 
 ### Added
