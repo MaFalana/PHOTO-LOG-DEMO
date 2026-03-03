@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_IMAGE: mfalana/hwc-crawfordsville-api
-  CONTAINER_NAME: hwc-crawfordsville-api
+  DOCKER_IMAGE: mfalana/photo-log-api
+  CONTAINER_NAME: photo-log-api
 
 concurrency:
   group: dockerhub-${{ github.ref }}
@@ -73,10 +73,9 @@ jobs:
               --set-env-vars \
                 PORT=8000 \
                 MONGO_CONNECTION_STRING="${{ secrets.MONGO_CONNECTION_STRING }}" \
-                MONGO_COLLECTION_NAME="${{ vars.MONGO_COLLECTION_NAME }}" \
+                MONGO_COLLECTION_NAME="${{ vars.NAME }}" \
                 AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
-                AZURE_STORAGE_CONTAINER_NAME="${{ vars.AZURE_STORAGE_CONTAINER_NAME }}" \
-                NAME="${{ vars.PROJECT_NAME }}"
+                AZURE_STORAGE_CONTAINER_NAME="${{ vars.NAME }}"
           else
             echo "Container App doesn't exist, creating in existing environment: $ENV_NAME"
             
@@ -105,10 +104,9 @@ jobs:
               --env-vars \
                 PORT=8000 \
                 MONGO_CONNECTION_STRING="${{ secrets.MONGO_CONNECTION_STRING }}" \
-                MONGO_COLLECTION_NAME="${{ vars.MONGO_COLLECTION_NAME }}" \
+                MONGO_COLLECTION_NAME="${{ vars.NAME }}" \
                 AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
-                AZURE_STORAGE_CONTAINER_NAME="${{ vars.AZURE_STORAGE_CONTAINER_NAME }}" \
-                NAME="${{ vars.PROJECT_NAME }}"
+                AZURE_STORAGE_CONTAINER_NAME="${{ vars.NAME }}"
           fi
           
           echo "Deployment completed successfully!"

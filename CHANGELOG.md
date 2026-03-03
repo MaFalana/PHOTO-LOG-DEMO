@@ -1,4 +1,4 @@
-# Crawfordsville Market Street Photo Log - Changelog
+# HWC Photo Log - Changelog
 
 All notable changes to this project will be documented in this file.
 

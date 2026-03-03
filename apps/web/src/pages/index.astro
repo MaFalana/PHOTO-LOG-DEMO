@@ -1,29 +1,35 @@
 ---
 import "../styles/global.css";
+import { HwcHeader } from "@hwc/header";
+import { PhotoMapApp } from "../components/PhotoMapApp.jsx";
+
+const mapTilerKey = import.meta.env.PUBLIC_MAPTILER_API_KEY;
+const mapboxToken = import.meta.env.PUBLIC_MAPBOX_TOKEN;
+const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || "";
 ---
 
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <link rel="icon" type="image/ico+xml" href="/favicon.ico" />
-        <meta name="viewport" content="width=device-width" />
-        <meta name="generator" content={Astro.generator} />
-        <title>HWC Projects</title>
-    </head>
-    <body>
-        <div
-            style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, sans-serif;"
-        >
-            <h1>HWC Projects</h1>
-            <p>Select a project to view:</p>
-            <div style="margin-top: 2rem;">
-                <a
-                    href="/2500-555-A"
-                    style="display: inline-block; padding: 1rem 2rem; background: #0066cc; color: white; text-decoration: none; border-radius: 8px; font-weight: 500;"
-                >
-                    Crawfordsville Market Street RR Grade Separation
-                </a>
-            </div>
-        </div>
-    </body>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/ico+xml" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>HWC Engineering | Photo Log</title>
+	</head>
+	<body>
+		<HwcHeader
+			client:only="react"
+			title="Photo Log"
+			right={null}
+			children={null}
+		/>
+
+		<PhotoMapApp
+			client:only="react"
+			maxZoom={22}
+			apiBaseUrl={apiBaseUrl}
+			mapTilerKey={mapTilerKey}
+			mapboxToken={mapboxToken}
+		/>
+	</body>
 </html>

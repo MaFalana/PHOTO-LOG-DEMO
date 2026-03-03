@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 env:
-  STATIC_WEB_APP_NAME: hwc-crawfordsville-web
+  STATIC_WEB_APP_NAME: photo-log-map
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
 jobs:
@@ -98,27 +98,6 @@ jobs:
           output_location: "dist" # Built app content directory - optional
           app_build_command: "npm run build" # Let Azure build it
           ###### End of Repository/Build Configurations ######
-
-      - name: Purge Azure Front Door Cache
-        if: success()
-        run: |
-          echo "Purging Front Door cache..."
-          # Get Front Door profile and endpoint names
-          FRONTDOOR_PROFILE=$(az afd profile list --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[0].name" -o tsv)
-          FRONTDOOR_ENDPOINT=$(az afd endpoint list --profile-name $FRONTDOOR_PROFILE --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[0].name" -o tsv)
-          
-          if [ -n "$FRONTDOOR_PROFILE" ] && [ -n "$FRONTDOOR_ENDPOINT" ]; then
-            echo "Purging cache for Front Door: $FRONTDOOR_PROFILE / $FRONTDOOR_ENDPOINT"
-            az afd endpoint purge \
-              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-              --profile-name $FRONTDOOR_PROFILE \
-              --endpoint-name $FRONTDOOR_ENDPOINT \
-              --content-paths "/2500-555-A/*" \
-              --domains "survey.hwcengineering.com"
-            echo "Cache purge completed for /2500-555-A/*"
-          else
-            echo "Front Door not found or not configured, skipping cache purge"
-          fi
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
