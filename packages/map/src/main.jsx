@@ -53,6 +53,50 @@ function MapNavigator({ targetItem, getLatLng }) {
   return null;
 }
 
+function BoundsTracker({ items, getId, getLatLng, onBoundsChange }) {
+  const map = useMap();
+  const prevVisibleIdsRef = React.useRef(null);
+
+  useEffect(() => {
+    if (!onBoundsChange) return;
+
+    const updateVisibleItems = () => {
+      const bounds = map.getBounds();
+      const visibleIds = items
+        .filter((it) => {
+          const p = getLatLng(it);
+          if (!p || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) return false;
+          const [lat, lon] = p;
+          return bounds.contains([lat, lon]);
+        })
+        .map((it) => getId(it));
+
+      // Only call callback if the visible IDs actually changed
+      const prevIds = prevVisibleIdsRef.current;
+      if (!prevIds ||
+        prevIds.length !== visibleIds.length ||
+        !prevIds.every((id, index) => id === visibleIds[index])) {
+        prevVisibleIdsRef.current = visibleIds;
+        onBoundsChange(visibleIds);
+      }
+    };
+
+    // Initial check
+    updateVisibleItems();
+
+    // Listen to map events
+    map.on('moveend', updateVisibleItems);
+    map.on('zoomend', updateVisibleItems);
+
+    return () => {
+      map.off('moveend', updateVisibleItems);
+      map.off('zoomend', updateVisibleItems);
+    };
+  }, [map, items, getId, getLatLng, onBoundsChange]);
+
+  return null;
+}
+
 function MapZoomControls({ items, getLatLng, orthoBounds }) {
   const map = useMap();
 
@@ -117,6 +161,7 @@ export function HwcMap({
   highlightedId,
   onHover,
   targetItem,
+  onBoundsChange, // Callback when visible items change
 
   // Map config
   initialCenter = [0, 0],
@@ -289,7 +334,8 @@ export function HwcMap({
             key="streets"
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap contributors"
-            maxZoom={maxZoom}
+            maxZoom={19}
+            maxNativeZoom={19}
           />
         )}
 
@@ -336,6 +382,7 @@ export function HwcMap({
         <FitBounds items={validItems} getLatLng={getLatLng} enabled={fitBoundsOnLoad} />
         <MapNavigator targetItem={targetItem} getLatLng={getLatLng} />
         <MapZoomControls items={validItems} getLatLng={getLatLng} orthoBounds={orthoBounds} />
+        <BoundsTracker items={validItems} getId={getId} getLatLng={getLatLng} onBoundsChange={onBoundsChange} />
 
         {children}
 

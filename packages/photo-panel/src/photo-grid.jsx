@@ -11,6 +11,7 @@ export function PhotoGrid({
   refreshTrigger,
   onPhotosChange, // Add callback for when photos are deleted/updated
   filters = {}, // Filter options: { year, month, tags }
+  visiblePhotoIds = null, // null = show all, array = filter to visible on map
   hideActions = false, // Hide batch actions (for split panel layout)
   hideLightbox = false // Don't render lightbox in grid (for app-level lightbox)
 }) {
@@ -27,6 +28,11 @@ export function PhotoGrid({
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef(null);
   const photoRefs = useRef({}); // Store refs to photo items for scrolling
+
+  // Filter photos to only show visible ones on map (if visiblePhotoIds is provided)
+  const displayedPhotos = visiblePhotoIds
+    ? photos.filter(photo => visiblePhotoIds.includes(photo._id))
+    : photos;
 
   // Scroll to highlighted photo when it changes
   useEffect(() => {
@@ -142,7 +148,7 @@ export function PhotoGrid({
   };
 
   const selectAll = () => {
-    const allIds = photos.map(photo => photo._id);
+    const allIds = displayedPhotos.map(photo => photo._id);
     onSelectionChange?.(allIds);
   };
 
@@ -151,11 +157,11 @@ export function PhotoGrid({
   };
 
   const handlePhotoClick = (photo) => {
-    const photoIndex = photos.findIndex(p => p._id === photo._id);
+    const photoIndex = displayedPhotos.findIndex(p => p._id === photo._id);
 
     if (hideLightbox && onPhotoClick) {
-      // Pass photo, all photos, and index to parent handler
-      onPhotoClick(photo, photos, photoIndex);
+      // Pass photo, all displayed photos, and index to parent handler
+      onPhotoClick(photo, displayedPhotos, photoIndex);
     } else {
       // Use internal lightbox
       setLightboxPhoto(photo);
@@ -165,9 +171,9 @@ export function PhotoGrid({
   };
 
   const handleLightboxNavigate = (newIndex) => {
-    if (newIndex >= 0 && newIndex < photos.length) {
+    if (newIndex >= 0 && newIndex < displayedPhotos.length) {
       setCurrentPhotoIndex(newIndex);
-      setLightboxPhoto(photos[newIndex]);
+      setLightboxPhoto(displayedPhotos[newIndex]);
     }
   };
 
@@ -194,7 +200,7 @@ export function PhotoGrid({
     }
 
     // Handle navigation after delete
-    const newPhotos = photos.filter(p => p._id !== deletedPhoto._id);
+    const newPhotos = displayedPhotos.filter(p => p._id !== deletedPhoto._id);
     if (newPhotos.length === 0) {
       // No more photos, close lightbox
       closeLightbox();
@@ -424,13 +430,24 @@ export function PhotoGrid({
     );
   }
 
+  if (displayedPhotos.length === 0 && visiblePhotoIds !== null) {
+    return (
+      <div className="photo-grid-empty">
+        <p className="empty-message">No photos visible in current map view. Pan or zoom out to see more photos.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="photo-grid-container">
       {/* Selection Controls */}
       <div className="photo-grid-controls">
         <div className="selection-info">
           <span>
-            {selectedPhotoIds.length} of {photos.length} selected
+            {selectedPhotoIds.length} of {displayedPhotos.length} selected
+            {visiblePhotoIds !== null && displayedPhotos.length < photos.length && (
+              <span className="total-count"> • {displayedPhotos.length} of {photos.length} in view</span>
+            )}
             {totalCount > photos.length && (
               <span className="total-count"> • Showing {photos.length} of {totalCount}</span>
             )}
@@ -444,7 +461,7 @@ export function PhotoGrid({
           <button
             className="control-btn-small"
             onClick={selectAll}
-            disabled={selectedPhotoIds.length === photos.length}
+            disabled={selectedPhotoIds.length === displayedPhotos.length}
           >
             Select All
           </button>
@@ -526,7 +543,7 @@ export function PhotoGrid({
 
       {/* Photo Grid */}
       <div className="photo-grid">
-        {photos.map(photo => (
+        {displayedPhotos.map(photo => (
           <PhotoGridItem
             key={photo._id}
             photo={photo}
@@ -563,7 +580,7 @@ export function PhotoGrid({
           onDelete={handleLightboxDelete}
           onEdit={handleLightboxEdit}
           apiBaseUrl={apiBaseUrl}
-          photos={photos}
+          photos={displayedPhotos}
           currentIndex={currentPhotoIndex}
           onNavigate={handleLightboxNavigate}
         />

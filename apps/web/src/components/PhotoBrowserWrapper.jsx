@@ -12,6 +12,7 @@ export function PhotoBrowserWrapper({
     refreshTrigger = 0,
     onPhotosChange,
     filters = {},
+    visiblePhotoIds = null, // null = show all, array = filter to visible
     isOpen,
     onToggle
 }) {
@@ -41,6 +42,7 @@ export function PhotoBrowserWrapper({
                     refreshTrigger={refreshTrigger}
                     onPhotosChange={onPhotosChange}
                     filters={filters}
+                    visiblePhotoIds={visiblePhotoIds}
                     hideActions={true} // Hide batch actions since they're in left panel
                     hideLightbox={true} // Don't render lightbox in grid, it's at app level
                 />

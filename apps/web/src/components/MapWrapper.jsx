@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { HwcMap } from '@hwc/map';
 
 export function MapWrapper({
@@ -9,7 +9,8 @@ export function MapWrapper({
   refreshTrigger = 0,
   apiBaseUrl,
   maxZoom = 22,
-  filters = {}
+  filters = {},
+  onVisiblePhotosChange // New prop to notify parent of visible photos
 }) {
   const [baseLayer, setBaseLayer] = useState('streets');
   const [photoMarkers, setPhotoMarkers] = useState([]);
@@ -81,6 +82,13 @@ export function MapWrapper({
     }
   };
 
+  // Handle bounds change - notify parent of visible photo IDs
+  const handleBoundsChange = useCallback((visibleIds) => {
+    if (onVisiblePhotosChange) {
+      onVisiblePhotosChange(visibleIds);
+    }
+  }, [onVisiblePhotosChange]);
+
   // If no API URL provided, show dummy markers for development
   const items = apiBaseUrl ? photoMarkers : [
     { id: "a", lat: 38.0, lon: -87.5, name: "A" },
@@ -96,6 +104,7 @@ export function MapWrapper({
       onBaseLayerChange={setBaseLayer}
       selectedIds={selectedPhotoIds}
       onSelect={handleMarkerClick}
+      onBoundsChange={handleBoundsChange}
       showControls={true}
       cluster={true}
       clusterOptions={{

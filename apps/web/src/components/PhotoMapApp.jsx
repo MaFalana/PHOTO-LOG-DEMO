@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ActionsPanelWrapper } from './ActionsPanelWrapper.jsx';
 import { PhotoBrowserWrapper } from './PhotoBrowserWrapper.jsx';
 import { MapWrapper } from './MapWrapper.jsx';
@@ -9,6 +9,7 @@ export function PhotoMapApp({ apiBaseUrl, mapTilerKey, mapboxToken, maxZoom = 22
   const [selectedPhotoIds, setSelectedPhotoIds] = useState([]);
   const [highlightedPhotoId, setHighlightedPhotoId] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [visiblePhotoIds, setVisiblePhotoIds] = useState(null); // null = show all, array = filter to visible
   const [filters, setFilters] = useState({
     startDate: null,
     endDate: null,
@@ -53,6 +54,11 @@ export function PhotoMapApp({ apiBaseUrl, mapTilerKey, mapboxToken, maxZoom = 22
     const newTrigger = Date.now();
     setRefreshTrigger(newTrigger);
   };
+
+  // Handle visible photos change from map
+  const handleVisiblePhotosChange = useCallback((visibleIds) => {
+    setVisiblePhotoIds(visibleIds);
+  }, []);
 
   // Handle map marker clicks - highlight photo in panel
   const handleMarkerClick = (photo) => {
@@ -187,6 +193,7 @@ export function PhotoMapApp({ apiBaseUrl, mapTilerKey, mapboxToken, maxZoom = 22
         onPhotosChange={handlePhotosChange}
         refreshTrigger={refreshTrigger}
         filters={filters}
+        visiblePhotoIds={visiblePhotoIds}
         isOpen={isPhotosOpen}
         onToggle={handlePhotosToggle}
       />
@@ -198,6 +205,7 @@ export function PhotoMapApp({ apiBaseUrl, mapTilerKey, mapboxToken, maxZoom = 22
           mapboxToken={mapboxToken}
           selectedPhotoIds={selectedPhotoIds}
           onMarkerClick={handleMarkerClick}
+          onVisiblePhotosChange={handleVisiblePhotosChange}
           refreshTrigger={refreshTrigger}
           apiBaseUrl={apiBaseUrl}
           maxZoom={maxZoom}
