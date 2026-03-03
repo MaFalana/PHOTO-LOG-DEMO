@@ -113,9 +113,9 @@ jobs:
               --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
               --profile-name $FRONTDOOR_PROFILE \
               --endpoint-name $FRONTDOOR_ENDPOINT \
-              --content-paths "/*" \
+              --content-paths "/2500-555-A/*" \
               --domains "survey.hwcengineering.com"
-            echo "Cache purge completed"
+            echo "Cache purge completed for /2500-555-A/*"
           else
             echo "Front Door not found or not configured, skipping cache purge"
           fi
