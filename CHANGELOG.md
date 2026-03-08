@@ -1,4 +1,4 @@
-# HWC Photo Log - Changelog
+# Photo Log - Changelog
 
 All notable changes to this project will be documented in this file.
 

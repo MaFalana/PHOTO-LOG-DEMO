@@ -1,18 +1,18 @@
-# HWC Photo Log
+# Photo Log
 
 A construction progress tracking application that combines interactive mapping with photo documentation. Built with Astro, React, and Python FastAPI.
 
 ## Features
 
-- 📸 Photo upload and management with geolocation
-- 🗺️ Interactive map with photo markers using Leaflet
-- 🔍 Zoom and pan functionality in photo lightbox viewer
-- 📍 Map viewport-based photo filtering
-- 🏷️ Date and tag filtering
-- 📦 Batch operations (select, export, delete)
-- 📥 Export functionality (ZIP, KML, KMZ)
-- 🎯 Marker clustering for better map performance
-- 🗂️ Multiple base layer options (streets, satellite)
+- Photo upload and management with geolocation
+- Interactive map with photo markers using Leaflet
+- Zoom and pan functionality in photo lightbox viewer
+- Map viewport-based photo filtering
+- Date and tag filtering
+- Batch operations (select, export, delete)
+- Export functionality (ZIP, KML, KMZ)
+- Marker clustering for better map performance
+- Multiple base layer options (streets, satellite)
 
 ## Tech Stack
 
@@ -47,13 +47,7 @@ A construction progress tracking application that combines interactive mapping w
 
 ### Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/MaFalana/HWC-PHOTO-LOG.git
-cd HWC-PHOTO-LOG
-```
-
-2. Install dependencies:
+1. Install dependencies:
 ```bash
 npm install
 ```
@@ -119,5 +113,5 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 
 ## License
 
-Private project for HWC construction tracking.
+Demo project for portfolio.
 

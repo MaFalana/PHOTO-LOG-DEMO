@@ -4,24 +4,28 @@ import "./header.css";
 export default function HwcHeader({
   logoSrc,
   basePath = "",
-  homeHref = "https://www.hwcengineering.com/",
-  alt = "HWC Engineering",
+  homeHref = "https://www.mfalana.dev",
+  alt = "Photo Log",
   title,
   actions,
   children
 }) {
-  // Default logo path with base path support
-  const defaultLogoSrc = `${basePath}/assets/HWC-Logo-Light.png`;
-  const finalLogoSrc = logoSrc || defaultLogoSrc;
+  // Use text branding instead of logo image
+  const showTextBranding = !logoSrc;
+  const finalLogoSrc = logoSrc;
   // actions: optional slot for header controls (search, filters, buttons, etc.)
   // children: fallback slot for additional content
 
   return (
-    <header className="hwc-header" role="banner" aria-label="HWC header">
+    <header className="hwc-header" role="banner" aria-label="Photo Log header">
       <div className="hwc-header__inner">
         <div className="hwc-header__left">
           <a className="hwc-header__brand" href={homeHref} aria-label="Home">
-            <img className="hwc-header__logo" src={finalLogoSrc} alt={alt} />
+            {showTextBranding ? (
+              <span className="hwc-header__brand-text">MFALANA</span>
+            ) : (
+              <img className="hwc-header__logo" src={finalLogoSrc} alt={alt} />
+            )}
           </a>
 
           {title ? (

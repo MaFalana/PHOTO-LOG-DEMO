@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 env:
-  STATIC_WEB_APP_NAME: photo-log-map
+  STATIC_WEB_APP_NAME: photo-log
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
 jobs:

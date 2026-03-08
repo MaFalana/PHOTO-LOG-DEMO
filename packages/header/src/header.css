@@ -41,6 +41,14 @@
   display: block;
 }
 
+.hwc-header__brand-text {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--hdr-fg, #F5F7FA);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
 .hwc-header__sep {
   color: var(--hdr-sep, rgba(255, 255, 255, 0.4));
 }
@@ -69,6 +77,9 @@
   }
   .hwc-header__logo {
     height: 24px;
+  }
+  .hwc-header__brand-text {
+    font-size: 1rem;
   }
   .hwc-header__title {
     max-width: 55vw;

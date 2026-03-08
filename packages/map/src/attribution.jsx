@@ -29,8 +29,8 @@ export function MapAttribution({ baseLayer = 'streets' }) {
 
   return (
     <div className="hwc-map-attribution">
-      <a href="https://www.hwcengineering.com/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <b>© {new Date().getFullYear()} HWC Engineering</b>
+      <a href="https://www.mfalana.dev" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <b>© {new Date().getFullYear()} Malik Falana</b>
       </a>
       {' | '}
       <a

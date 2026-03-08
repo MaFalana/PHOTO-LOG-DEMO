@@ -13,8 +13,9 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 class DatabaseManager:
     def __init__(self):
-        self.storage_container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
-        db_name = os.getenv("MONGO_COLLECTION_NAME")
+        name = os.getenv("NAME")
+        self.storage_container_name = name
+        db_name = name
 
         self.az = AzureStorageManager(self.storage_container_name) # Initialize Azure Storage Manager
         conn = os.getenv("MONGO_CONNECTION_STRING")
