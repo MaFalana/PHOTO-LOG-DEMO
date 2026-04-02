@@ -1,0 +1,6 @@
+{
+  "navigationFallback": {
+    "rewrite": "/demo/photo-log/index.html",
+    "exclude": ["/demo/photo-log/_astro/*", "*.ico", "*.svg"]
+  }
+}
